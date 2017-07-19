@@ -111,7 +111,7 @@ public class LoginActivity extends AppCompatActivity {
         edClientId = (EditText) findViewById(R.id.edClientId);
         myScroll = (ScrollView) findViewById(R.id.myScroll);
 
-        bntLogout.setEnabled(false);
+//        bntLogout.setEnabled(false);
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -180,7 +180,8 @@ public class LoginActivity extends AppCompatActivity {
                 .subscribe(new DisposableObserver<APIClient>() {
                     @Override
                     public void onNext(@NonNull APIClient apiClient) {
-                        apiClient.logout(getCookie(), getLocation()).subscribeOn(Schedulers.io())
+                        apiClient.logout()
+                                .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(getLogoutDisposal());
                     }
@@ -232,7 +233,8 @@ public class LoginActivity extends AppCompatActivity {
                     public void onNext(@NonNull APIClient apiClient) {
                         Log.i("vtt", "Start login");
                         String token = TokenUtils.getBase64FromUserNameAndPassword(userName, password);
-                        apiClient.login(edLoginUrl.getText().toString(),
+                        apiClient.login(
+                                edLoginUrl.getText().toString(),
                                 "Basic " + token,
                                 TokenUtils.RESPONSE_TYPE,
                                 edClientId.getText().toString(),
@@ -309,7 +311,7 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i("vtt", "opsId: " + opsId);
                 Log.i("vtt", "commAuthId: " + commAuthId);
                 Log.i("vtt", "location: " + location);
-                bntLogout.setEnabled(true);
+//                bntLogout.setEnabled(true);
             }
 
             @Override
@@ -370,13 +372,13 @@ public class LoginActivity extends AppCompatActivity {
             public void onNext(@NonNull Response<ResponseBody> responseBody) {
                 Log.i("vtt", "Success response: " + responseBody.toString());
                 Log.i("vtt", "Success header: " + responseBody.headers());
-                bntLogout.setEnabled(false);
+//                bntLogout.setEnabled(false);
             }
 
             @Override
             public void onError(@NonNull Throwable e) {
                 updateUIError(e.getMessage());
-                bntLogout.setEnabled(true);
+//                bntLogout.setEnabled(true);
             }
 
             @Override
@@ -393,8 +395,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private String getCookie() {
-        return prefs.getString(KEY_COMMON_AUTH_ID, null)
-                + prefs.getString(KEY_OPS_ID, null) + "requestedURI=../../carbon/admin/index.jsp";
+//        return prefs.getString(KEY_COMMON_AUTH_ID, "")
+//                + prefs.getString(KEY_OPS_ID, "") + "requestedURI=../../carbon/admin/index.jsp";
+        return prefs.getString(KEY_COMMON_AUTH_ID, "")
+                + prefs.getString(KEY_OPS_ID, "");
     }
 
     private void updateUIError(String message) {

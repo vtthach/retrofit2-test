@@ -27,7 +27,7 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 public class ServiceGenerator {
 
-    public static final int TIME_OUT = 10; // Second
+    public static final int TIME_OUT = 5*60; // Second
     public static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
 
     static {
@@ -52,6 +52,8 @@ public class ServiceGenerator {
         HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor(PocApplication.getInstance().getLogger());
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         httpClient.addInterceptor(httpLoggingInterceptor);
+
+        // Automatic manage cookie
         ClearableCookieJar cookieJar =
                 new PersistentCookieJar(new SetCookieCache(), new SharedPrefsCookiePersistor(getAppContext()));
         httpClient.cookieJar(cookieJar);

@@ -25,9 +25,19 @@ public interface APIClient {
             @Field("client_id") String clientId,
             @Field("redirect_uri") String redirectUri,
             @Field("scope") String scope);
+//    Observable<Response<ResponseBody>> login(
+//            @Url String url,
+//            @Header("Cookie") String cookie,
+//            @Header("Referer") String location,
+//            @Header("Authorization") String token,
+//            @Field("response_type") String responseType,
+//            @Field("client_id") String clientId,
+//            @Field("redirect_uri") String redirectUri,
+//            @Field("scope") String scope);
 
 
     @Headers("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
     @POST("/oidc/logout")
-    Observable<Response<ResponseBody>> logout(@Header("Cookie") String cookie, @Header("Referer") String location);
+//    Observable<Response<ResponseBody>> logout(@Header("Cookie") String cookie, @Header("Referer") String location);
+    Observable<Response<ResponseBody>> logout();
 }
