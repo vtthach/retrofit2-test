@@ -2,6 +2,12 @@ package nl.jpelgrm.retrofit2oauthrefresh.api;
 
 import android.content.Context;
 
+import com.franmontiel.persistentcookiejar.ClearableCookieJar;
+import com.franmontiel.persistentcookiejar.PersistentCookieJar;
+import com.franmontiel.persistentcookiejar.cache.SetCookieCache;
+import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
+
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
@@ -9,7 +15,12 @@ import javax.net.ssl.SSLSession;
 
 import nl.jpelgrm.retrofit2oauthrefresh.PocApplication;
 import nl.jpelgrm.retrofit2oauthrefresh.api.objects.FakeX509TrustManager;
+import okhttp3.Authenticator;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -41,6 +52,9 @@ public class ServiceGenerator {
         HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor(PocApplication.getInstance().getLogger());
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         httpClient.addInterceptor(httpLoggingInterceptor);
+        ClearableCookieJar cookieJar =
+                new PersistentCookieJar(new SetCookieCache(), new SharedPrefsCookiePersistor(getAppContext()));
+        httpClient.cookieJar(cookieJar);
     }
 
     private static Context getAppContext() {

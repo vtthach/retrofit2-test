@@ -26,6 +26,8 @@ import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import io.reactivex.Observable;
@@ -45,6 +47,8 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
+    public static final String COMMON_AUTH_ID = "commonAuthId";
+    public static final String OPBS_ID = "opbs";
 
     private static final String KEY_COMMON_AUTH_ID = "KEY_COMMON_AUTH_ID";
     private static final String KEY_OPS_ID = "KEY_OPS_ID";
@@ -279,19 +283,32 @@ public class LoginActivity extends AppCompatActivity {
             public void onNext(@NonNull Response<ResponseBody> responseBody) {
                 Log.i("vtt", "Success response: " + responseBody.toString());
                 Headers list = responseBody.headers();
+                String opsId = "";
+                String commAuthId = "";
+                String location = "";
+                Map<String, List<String>> map = list.toMultimap();
+                List<String> cookieMaps = map.get("Set-Cookie");
+                if (cookieMaps != null) {
+                    for (String value : cookieMaps) {
+                        if (value.contains(OPBS_ID)) {
+                            opsId = getOpsId(value);
+                        } else if (value.contains(COMMON_AUTH_ID)) {
+                            commAuthId = getCommAuthId(value);
+                        }
+                    }
+                    location = list.get("Location");
+                    prefs.edit().putString(KEY_OPS_ID, opsId).apply();
+                    prefs.edit().putString(KEY_COMMON_AUTH_ID, commAuthId).apply();
+                    prefs.edit().putString(KEY_LOCATION, location).apply();
+                    updateUIError(Color.BLUE, "opsId: " + opsId);
+                    updateUIError(Color.BLUE, "commAuthId: " + commAuthId);
+                    updateUIError(Color.BLUE, "location: " + location);
+                }
 
                 // TODO difference key for OP_ID
-                String opsId = getOpsId(list.get("Set-Cookie"));
-                String commAuthId = getCommAuthId(list.get("Set-Cookie"));
-                String location = list.get("Location");
                 Log.i("vtt", "opsId: " + opsId);
                 Log.i("vtt", "commAuthId: " + commAuthId);
                 Log.i("vtt", "location: " + location);
-
-                prefs.edit().putString(KEY_OPS_ID, opsId).apply();
-                prefs.edit().putString(KEY_COMMON_AUTH_ID, commAuthId).apply();
-                prefs.edit().putString(KEY_LOCATION, location).apply();
-
                 bntLogout.setEnabled(true);
             }
 
@@ -304,21 +321,33 @@ public class LoginActivity extends AppCompatActivity {
             public void onComplete() {
 
             }
+
+            private String getCommAuthId(String commAuthId) {
+                try {
+                    int firstIndex = commAuthId.indexOf(COMMON_AUTH_ID);
+                    int lastIndex = commAuthId.indexOf(';');
+                    return commAuthId.substring(firstIndex, lastIndex + 1);
+                } catch (Exception e) {
+                    updateUIError("commAuthId not found: " + commAuthId);
+                }
+                return "";
+            }
+
+            private String getOpsId(String opbs) {
+                try {
+                    int firstIndex = opbs.indexOf(OPBS_ID);
+                    int lastIndex = opbs.indexOf(';');
+                    return opbs.substring(firstIndex, lastIndex + 1);
+                } catch (Exception e) {
+                    updateUIError("opbs not found: " + opbs);
+                }
+                return "";
+            }
         };
         composite.add(login);
         return login;
     }
 
-    private String getOpsId(String opbs) {
-        try {
-            int firstIndex = opbs.indexOf("opbs=");
-            int lastIndex = opbs.indexOf(';');
-            return opbs.substring(firstIndex, lastIndex + 1);
-        } catch (Exception e) {
-            updateUIError("opbs not found: " + opbs);
-        }
-        return "";
-    }
 
     public static void appendColoredText(TextView tv, String text, int color) {
         int start = tv.getText().length();
@@ -329,16 +358,6 @@ public class LoginActivity extends AppCompatActivity {
         spannableText.setSpan(new ForegroundColorSpan(color), start, end, 0);
     }
 
-    private String getCommAuthId(String commAuthId) {
-        try {
-            int firstIndex = commAuthId.indexOf("commonAuthId=");
-            int lastIndex = commAuthId.indexOf(';');
-            return commAuthId.substring(firstIndex, lastIndex + 1);
-        } catch (Exception e) {
-            updateUIError("commAuthId not found: " + commAuthId);
-        }
-        return "";
-    }
 
     private Observer<? super Response<ResponseBody>> getLogoutDisposal() {
         DisposableObserver logout = new DisposableObserver<Response<ResponseBody>>() {

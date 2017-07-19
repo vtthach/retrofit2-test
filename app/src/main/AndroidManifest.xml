@@ -19,11 +19,9 @@
 
         </activity>
         <activity
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:name=".LoginActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-            <data
-                android:host="oauth"
-                android:scheme="nl.jpelgrm.retrofit2oauthrefresh" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
