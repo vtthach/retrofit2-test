@@ -62,6 +62,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button bntLogout;
     private Button btnClear;
     private Button btnCheckSessionGet;
+    private Button btnClearCookie;
 
     private TextView tvResult;
     private TextView tvCookieLog;
@@ -70,6 +71,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText edTextPassword;
     private EditText edHostUrl;
     private EditText edRedirectUri;
+    private EditText edUserAgent;
 
     private EditText edClientId;
     private ScrollView myScroll;
@@ -140,7 +142,14 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setView() {
-        //        bntLogout.setEnabled(false);
+
+        btnClearCookie.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ServiceGenerator.setCookieCache.clear();
+                updateUICookieLog();
+            }
+        });
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -224,12 +233,14 @@ public class LoginActivity extends AppCompatActivity {
         tvCookieLog = (TextView) findViewById(R.id.tvCookieLog);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         bntLogout = (Button) findViewById(R.id.bntLogout);
+        btnClearCookie = (Button) findViewById(R.id.btnClearCookie);
         btnClear = (Button) findViewById(R.id.btnClear);
         edTextUserName = (EditText) findViewById(R.id.edUserName);
         edTextPassword = (EditText) findViewById(R.id.edPassword);
         edLoginUrl = (EditText) findViewById(R.id.edLoginUrl);
         edHostUrl = (EditText) findViewById(R.id.edHostUrl);
         edRedirectUri = (EditText) findViewById(R.id.edRedirectUri);
+        edUserAgent = (EditText) findViewById(R.id.edUserAgent);
         edClientId = (EditText) findViewById(R.id.edClientId);
         myScroll = (ScrollView) findViewById(R.id.myScroll);
         btnCheckSessionGet = (Button) findViewById(R.id.btnCheckSession);
@@ -260,7 +271,7 @@ public class LoginActivity extends AppCompatActivity {
                 .subscribe(new DisposableObserver<APIClient>() {
                     @Override
                     public void onNext(@NonNull APIClient apiClient) {
-                        apiClient.logout()
+                        apiClient.logout(edUserAgent.getText().toString())
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(getLogoutDisposal());
@@ -295,7 +306,7 @@ public class LoginActivity extends AppCompatActivity {
         return io.reactivex.Observable.defer(new Callable<ObservableSource<APIClient>>() {
             @Override
             public ObservableSource<APIClient> call() throws Exception {
-                return Observable.just(ServiceGenerator.createService(APIClient.class, logger, edHostUrl.getText().toString()));
+                return Observable.just(ServiceGenerator.createService(APIClient.class, edHostUrl.getText().toString()));
             }
         });
     }
@@ -312,6 +323,7 @@ public class LoginActivity extends AppCompatActivity {
                         Log.i("vtt", "Start login");
                         String token = TokenUtils.getBase64FromUserNameAndPassword(userName, password);
                         apiClient.login(
+                                edUserAgent.getText().toString(),
                                 edLoginUrl.getText().toString(),
                                 "Basic " + token,
                                 TokenUtils.RESPONSE_TYPE,
@@ -447,7 +459,6 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i("vtt", "opsId: " + opsId);
                 Log.i("vtt", "commAuthId: " + commAuthId);
                 Log.i("vtt", "location: " + location);
-
             }
 
             @Override
@@ -488,7 +499,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void updateUICookieLog() {
-        tvCookieLog.setText(getSaveCookie());
+        tvCookieLog.setText("");
+        appendColoredText(tvCookieLog, "Cookie\n", Color.BLUE);
+        appendColoredText(tvCookieLog, getSaveCookie(), Color.DKGRAY);
     }
 
     private String getSaveCookie() {

@@ -67,6 +67,20 @@
                     android:hint="Password"
                     android:text="111111"
                     tools:ignore="HardcodedText" />
+                <!--Username and password-->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="User-agent" />
+
+                <EditText
+                    android:id="@+id/edUserAgent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:hint="Password"
+                    android:text="PocAgent"
+                    tools:ignore="HardcodedText" />
 
             </LinearLayout>
 
@@ -169,7 +183,13 @@
                 android:text="Clear log"
                 tools:ignore="HardcodedText" />
 
-
+            <Button
+                android:id="@+id/btnClearCookie"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp"
+                android:text="Clear cookie"
+                tools:ignore="HardcodedText" />
         </LinearLayout>
 
 

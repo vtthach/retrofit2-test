@@ -67,7 +67,7 @@ public class ServiceGenerator {
         return PocApplication.getInstance().getApplicationContext();
     }
 
-    public static <S> S createService(Class<S> serviceClass, HttpLoggingInterceptor.Logger logger, String hostUrl) {
+    public static <S> S createService(Class<S> serviceClass, String hostUrl) {
         // host url
         Retrofit.Builder retrofitBuilder = new Retrofit.Builder()
                 .baseUrl(hostUrl)

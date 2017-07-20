@@ -21,6 +21,7 @@ public interface APIClient {
 //    @POST("/authorize") // Test Saneth
     @Headers("Content-type: application/x-www-form-urlencoded;charset=UTF-8")
     Observable<Response<ResponseBody>> login(
+            @Header("User-Agent") String userAgent,
             @Url String url,
             @Header("Authorization") String token,
             @Field("response_type") String responseType,
@@ -30,7 +31,7 @@ public interface APIClient {
 
     @Headers("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
     @POST("/oidc/logout")
-    Observable<Response<ResponseBody>> logout();
+    Observable<Response<ResponseBody>> logout(@Header("User-Agent") String userAgent);
 
     @GET("/oidc/checksession")
     Observable<Response<ResponseBody>> checkSessionGet(@Query("client_id") String clientId);
