@@ -18,7 +18,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Property file path: sdcard/oauth_config.properties" />
+            android:text="Property file path"
+            android:textStyle="italic" />
+
+        <Spinner
+            android:id="@+id/spinnerPropertyPath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:entries="@array/property_paths" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -155,10 +162,10 @@
                 tools:ignore="HardcodedText" />
 
             <Button
-                android:layout_marginLeft="50dp"
                 android:id="@+id/btnClear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp"
                 android:text="Clear log"
                 tools:ignore="HardcodedText" />
 

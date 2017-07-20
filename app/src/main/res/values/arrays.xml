@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="property_paths">
+        <item> oauth_config_saneth.properties</item>
+        <item> oauth_config_thach.properties</item>
+    </string-array>
+</resources>

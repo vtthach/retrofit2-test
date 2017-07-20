@@ -12,9 +12,11 @@ import android.text.Spannable;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.karumi.dexter.Dexter;
@@ -72,6 +74,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText edClientId;
     private ScrollView myScroll;
 
+    private Spinner spinnerPropertyPath;
+
     private final Handler debugHandler = new Handler();
 
     final SharedPreferences prefs = PocApplication.getInstance().getApplicationContext().getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
@@ -79,6 +83,8 @@ public class LoginActivity extends AppCompatActivity {
     private CompositeDisposable composite = new CompositeDisposable();
 
     private String logfile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/log.txt";
+
+    private String[] filePath;
 
     private Runnable autoScrollDownRunnable = new Runnable() {
         @Override
@@ -163,6 +169,18 @@ public class LoginActivity extends AppCompatActivity {
                 startCheckSession(false);
             }
         });
+        spinnerPropertyPath.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                AppProperties.getInstance().resetProperties(filePath[position]);
+                initProperty();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void startCheckSession(final boolean isPost) {
@@ -200,6 +218,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void getView() {
+        filePath = getResources().getStringArray(R.array.property_paths);
+        spinnerPropertyPath = (Spinner) findViewById(R.id.spinnerPropertyPath);
         tvResult = (TextView) findViewById(R.id.tvResult);
         tvCookieLog = (TextView) findViewById(R.id.tvCookieLog);
         btnLogin = (Button) findViewById(R.id.btnLogin);
@@ -216,6 +236,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initProperty() {
+        edTextUserName.setText(BuildInProperties.getUserName());
+        edTextPassword.setText(BuildInProperties.getPassword());
         edHostUrl.setText(BuildInProperties.getHostUrl());
         edClientId.setText(BuildInProperties.getClientId());
         edRedirectUri.setText(BuildInProperties.getRedirectUri());
@@ -260,8 +282,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        AppProperties.getInstance().resetProperties();
-        initProperty();
         PocApplication.getInstance().setLogCallback(logger);
     }
 

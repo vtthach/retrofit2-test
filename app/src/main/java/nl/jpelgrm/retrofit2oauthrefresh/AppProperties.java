@@ -21,11 +21,10 @@ public class AppProperties {
         return appProperties;
     }
 
-    public void resetProperties() {
+    public void resetProperties(String fileName) {
         Context context = getApplicationContext();
         if (context != null) {
-            loadFromAssetFile(context, prop);
-            loadPropertiesFromFile(context);
+            loadPropertiesFromFile(context, fileName);
         }
     }
 
@@ -42,9 +41,9 @@ public class AppProperties {
         return PocApplication.getInstance() != null ? PocApplication.getInstance().getApplicationContext() : null;
     }
 
-    public void loadPropertiesFromFile(@NonNull Context context) {
+    public void loadPropertiesFromFile(@NonNull Context context, String fileName) {
         try {
-            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/oauth_config.properties");
+            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + fileName);
             if (file.exists()) {
                 InputStream fileStream = new FileInputStream(file);
                 prop.load(fileStream);

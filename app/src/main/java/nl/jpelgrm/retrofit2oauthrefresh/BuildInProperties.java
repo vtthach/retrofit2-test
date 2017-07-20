@@ -31,7 +31,15 @@ public class BuildInProperties {
         return AppProperties.getInstance().getProperty(KEY_CLIENT_ID, DEFAULT_CLIENT_ID);
     }
 
-    public static final String getLoginPostUrl() {
+    public static String getLoginPostUrl() {
         return AppProperties.getInstance().getProperty("login_url", "/oauth2/authorize");
+    }
+
+    public static String getUserName() {
+        return AppProperties.getInstance().getProperty("user_name", "");
+    }
+
+    public static String getPassword() {
+        return AppProperties.getInstance().getProperty("password", "");
     }
 }
