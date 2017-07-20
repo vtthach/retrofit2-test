@@ -4,10 +4,11 @@ import android.content.Context;
 
 import com.franmontiel.persistentcookiejar.ClearableCookieJar;
 import com.franmontiel.persistentcookiejar.PersistentCookieJar;
+import com.franmontiel.persistentcookiejar.cache.CookieCache;
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache;
+import com.franmontiel.persistentcookiejar.persistence.CookiePersistor;
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
@@ -15,12 +16,7 @@ import javax.net.ssl.SSLSession;
 
 import nl.jpelgrm.retrofit2oauthrefresh.PocApplication;
 import nl.jpelgrm.retrofit2oauthrefresh.api.objects.FakeX509TrustManager;
-import okhttp3.Authenticator;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.Route;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -29,6 +25,10 @@ public class ServiceGenerator {
 
     public static final int TIME_OUT = 5*60; // Second
     public static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+
+    public static final CookiePersistor sharedPrefsCookiePersistor;
+
+    public static final CookieCache setCookieCache;
 
     static {
         // Ignore ssl
@@ -53,9 +53,13 @@ public class ServiceGenerator {
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         httpClient.addInterceptor(httpLoggingInterceptor);
 
+        sharedPrefsCookiePersistor = new SharedPrefsCookiePersistor(getAppContext());
+
+        setCookieCache = new SetCookieCache();
+
         // Automatic manage cookie
         ClearableCookieJar cookieJar =
-                new PersistentCookieJar(new SetCookieCache(), new SharedPrefsCookiePersistor(getAppContext()));
+                new PersistentCookieJar(setCookieCache, sharedPrefsCookiePersistor);
         httpClient.cookieJar(cookieJar);
     }
 

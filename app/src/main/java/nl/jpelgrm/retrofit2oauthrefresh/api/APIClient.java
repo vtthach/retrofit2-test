@@ -5,9 +5,11 @@ import okhttp3.ResponseBody;
 import retrofit2.Response;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 import retrofit2.http.Url;
 
 public interface APIClient {
@@ -25,19 +27,15 @@ public interface APIClient {
             @Field("client_id") String clientId,
             @Field("redirect_uri") String redirectUri,
             @Field("scope") String scope);
-//    Observable<Response<ResponseBody>> login(
-//            @Url String url,
-//            @Header("Cookie") String cookie,
-//            @Header("Referer") String location,
-//            @Header("Authorization") String token,
-//            @Field("response_type") String responseType,
-//            @Field("client_id") String clientId,
-//            @Field("redirect_uri") String redirectUri,
-//            @Field("scope") String scope);
-
 
     @Headers("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
     @POST("/oidc/logout")
-//    Observable<Response<ResponseBody>> logout(@Header("Cookie") String cookie, @Header("Referer") String location);
     Observable<Response<ResponseBody>> logout();
+
+    @GET("/oidc/checksession")
+    Observable<Response<ResponseBody>> checkSessionGet(@Query("client_id") String clientId);
+
+    @FormUrlEncoded
+    @POST("/oidc/checksession")
+    Observable<Response<ResponseBody>> checkSessionPost(@Field("client_id") String clientId);
 }

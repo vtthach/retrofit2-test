@@ -26,6 +26,7 @@ import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -41,6 +42,7 @@ import io.reactivex.schedulers.Schedulers;
 import nl.jpelgrm.retrofit2oauthrefresh.api.APIClient;
 import nl.jpelgrm.retrofit2oauthrefresh.api.ServiceGenerator;
 import nl.jpelgrm.retrofit2oauthrefresh.api.objects.TokenUtils;
+import okhttp3.Cookie;
 import okhttp3.Headers;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -57,8 +59,10 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private Button bntLogout;
     private Button btnClear;
+    private Button btnCheckSessionGet;
 
     private TextView tvResult;
+    private TextView tvCookieLog;
     private EditText edTextUserName;
     private EditText edLoginUrl;
     private EditText edTextPassword;
@@ -66,11 +70,15 @@ public class LoginActivity extends AppCompatActivity {
     private EditText edRedirectUri;
 
     private EditText edClientId;
-    final SharedPreferences prefs = PocApplication.getInstance().getApplicationContext().getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
+    private ScrollView myScroll;
+
     private final Handler debugHandler = new Handler();
+
+    final SharedPreferences prefs = PocApplication.getInstance().getApplicationContext().getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
+
     private CompositeDisposable composite = new CompositeDisposable();
 
-    private ScrollView myScroll;
+    private String logfile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/log.txt";
 
     private Runnable autoScrollDownRunnable = new Runnable() {
         @Override
@@ -78,7 +86,6 @@ public class LoginActivity extends AppCompatActivity {
             myScroll.fullScroll(ScrollView.FOCUS_DOWN);
         }
     };
-    private String logfile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/log.txt";
     private HttpLoggingInterceptor.Logger logger = new HttpLoggingInterceptor.Logger() {
         @Override
         public void log(final String message) {
@@ -99,19 +106,35 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        tvResult = (TextView) findViewById(R.id.tvResult);
-        btnLogin = (Button) findViewById(R.id.btnLogin);
-        bntLogout = (Button) findViewById(R.id.bntLogout);
-        btnClear = (Button) findViewById(R.id.btnClear);
-        edTextUserName = (EditText) findViewById(R.id.edUserName);
-        edTextPassword = (EditText) findViewById(R.id.edPassword);
-        edLoginUrl = (EditText) findViewById(R.id.edLoginUrl);
-        edHostUrl = (EditText) findViewById(R.id.edHostUrl);
-        edRedirectUri = (EditText) findViewById(R.id.edRedirectUri);
-        edClientId = (EditText) findViewById(R.id.edClientId);
-        myScroll = (ScrollView) findViewById(R.id.myScroll);
+        getView();
+        setView();
+        checkAppPermission();
+    }
 
-//        bntLogout.setEnabled(false);
+    private void checkAppPermission() {
+        Dexter.withActivity(this)
+                .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .withListener(new PermissionListener() {
+                    @Override
+                    public void onPermissionGranted(PermissionGrantedResponse response) {
+
+                    }
+
+                    @Override
+                    public void onPermissionDenied(PermissionDeniedResponse response) {
+
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+
+                    }
+                })
+                .check();
+    }
+
+    private void setView() {
+        //        bntLogout.setEnabled(false);
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,27 +157,62 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        Dexter.withActivity(this)
-                .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .withListener(new PermissionListener() {
-                    @Override
-                    public void onPermissionGranted(PermissionGrantedResponse response) {
+        btnCheckSessionGet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startCheckSession(false);
+            }
+        });
+    }
 
+    private void startCheckSession(final boolean isPost) {
+        composite.clear();
+        logOnUi("\n----------Check Session ", DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime()));
+        getObservableInitService()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableObserver<APIClient>() {
+                    @Override
+                    public void onNext(@NonNull APIClient apiClient) {
+                        if (isPost) {
+                            apiClient.checkSessionPost(edClientId.getText().toString())
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(getCheckSessionDisposal());
+                        } else {
+                            apiClient.checkSessionGet(edClientId.getText().toString())
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(getCheckSessionDisposal());
+                        }
                     }
 
                     @Override
-                    public void onPermissionDenied(PermissionDeniedResponse response) {
-
+                    public void onError(@NonNull Throwable e) {
+                        updateLogError(e.getMessage());
                     }
 
                     @Override
-                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                    public void onComplete() {
 
                     }
-                })
-                .check();
+                });
+    }
 
-
+    private void getView() {
+        tvResult = (TextView) findViewById(R.id.tvResult);
+        tvCookieLog = (TextView) findViewById(R.id.tvCookieLog);
+        btnLogin = (Button) findViewById(R.id.btnLogin);
+        bntLogout = (Button) findViewById(R.id.bntLogout);
+        btnClear = (Button) findViewById(R.id.btnClear);
+        edTextUserName = (EditText) findViewById(R.id.edUserName);
+        edTextPassword = (EditText) findViewById(R.id.edPassword);
+        edLoginUrl = (EditText) findViewById(R.id.edLoginUrl);
+        edHostUrl = (EditText) findViewById(R.id.edHostUrl);
+        edRedirectUri = (EditText) findViewById(R.id.edRedirectUri);
+        edClientId = (EditText) findViewById(R.id.edClientId);
+        myScroll = (ScrollView) findViewById(R.id.myScroll);
+        btnCheckSessionGet = (Button) findViewById(R.id.btnCheckSession);
     }
 
     private void initProperty() {
@@ -188,7 +246,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        updateUIError(e.getMessage());
+                        updateLogError(e.getMessage());
                     }
 
                     @Override
@@ -247,7 +305,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(@NonNull Throwable e) {
-                        updateUIError(e.getMessage());
+                        updateLogError(e.getMessage());
                     }
 
                     @Override
@@ -272,6 +330,66 @@ public class LoginActivity extends AppCompatActivity {
     private void autoScrollDown() {
         debugHandler.removeCallbacks(autoScrollDownRunnable);
         debugHandler.postDelayed(autoScrollDownRunnable, 200);
+    }
+
+    private Observer<? super Response<ResponseBody>> getCheckSessionDisposal() {
+        DisposableObserver disposableObserver = new DisposableObserver<Response<ResponseBody>>() {
+
+            @Override
+            protected void onStart() {
+                super.onStart();
+            }
+
+            @Override
+            public void onNext(@NonNull Response<ResponseBody> responseBody) {
+                updateLogWithColor(Color.BLUE, "Check session response code: " + responseBody.code());
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+                updateLogError(e.getMessage());
+                updateUICookieLog();
+            }
+
+            @Override
+            public void onComplete() {
+                updateUICookieLog();
+            }
+        };
+        composite.add(disposableObserver);
+        return disposableObserver;
+    }
+
+    private Observer<? super Response<ResponseBody>> getLogoutDisposal() {
+        DisposableObserver logout = new DisposableObserver<Response<ResponseBody>>() {
+            @Override
+            protected void onStart() {
+                super.onStart();
+            }
+
+            @Override
+            public void onNext(@NonNull Response<ResponseBody> responseBody) {
+                Log.i("vtt", "Success response: " + responseBody.toString());
+                Log.i("vtt", "Success header: " + responseBody.headers());
+                Headers list = responseBody.headers();
+                String location = list.get("Location");
+                updateLogWithColor(Color.BLUE, "location: " + location);
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+                updateLogError(e.getMessage());
+//                bntLogout.setEnabled(true);
+                updateUICookieLog();
+            }
+
+            @Override
+            public void onComplete() {
+                updateUICookieLog();
+            }
+        };
+        composite.add(logout);
+        return logout;
     }
 
     private Observer<? super Response<ResponseBody>> getLoginDisposal() {
@@ -302,26 +420,25 @@ public class LoginActivity extends AppCompatActivity {
                     prefs.edit().putString(KEY_OPS_ID, opsId).apply();
                     prefs.edit().putString(KEY_COMMON_AUTH_ID, commAuthId).apply();
                     prefs.edit().putString(KEY_LOCATION, location).apply();
-                    updateUIError(Color.BLUE, "opsId: " + opsId);
-                    updateUIError(Color.BLUE, "commAuthId: " + commAuthId);
-                    updateUIError(Color.BLUE, "location: " + location);
+                    updateLogWithColor(Color.BLUE, "location: " + location);
                 }
 
                 // TODO difference key for OP_ID
                 Log.i("vtt", "opsId: " + opsId);
                 Log.i("vtt", "commAuthId: " + commAuthId);
                 Log.i("vtt", "location: " + location);
-//                bntLogout.setEnabled(true);
+
             }
 
             @Override
             public void onError(@NonNull Throwable e) {
-                updateUIError(e.getMessage());
+                updateUICookieLog();
+                updateLogError(e.getMessage());
             }
 
             @Override
             public void onComplete() {
-
+                updateUICookieLog();
             }
 
             private String getCommAuthId(String commAuthId) {
@@ -330,7 +447,7 @@ public class LoginActivity extends AppCompatActivity {
                     int lastIndex = commAuthId.indexOf(';');
                     return commAuthId.substring(firstIndex, lastIndex + 1);
                 } catch (Exception e) {
-                    updateUIError("commAuthId not found: " + commAuthId);
+                    updateLogError("commAuthId not found: " + commAuthId);
                 }
                 return "";
             }
@@ -341,13 +458,28 @@ public class LoginActivity extends AppCompatActivity {
                     int lastIndex = opbs.indexOf(';');
                     return opbs.substring(firstIndex, lastIndex + 1);
                 } catch (Exception e) {
-                    updateUIError("opbs not found: " + opbs);
+                    updateLogError("opbs not found: " + opbs);
                 }
                 return "";
             }
         };
         composite.add(login);
         return login;
+    }
+
+    private void updateUICookieLog() {
+        tvCookieLog.setText(getSaveCookie());
+    }
+
+    private String getSaveCookie() {
+        Iterator<Cookie> cookieCache = ServiceGenerator.setCookieCache.iterator();
+        String cookieString = "";
+        for (Iterator<Cookie> it = cookieCache; it.hasNext(); ) {
+            Cookie cookie = it.next();
+            cookieString += "\n" + cookie.toString();
+        }
+        return cookieString;
+
     }
 
 
@@ -358,36 +490,6 @@ public class LoginActivity extends AppCompatActivity {
 
         Spannable spannableText = (Spannable) tv.getText();
         spannableText.setSpan(new ForegroundColorSpan(color), start, end, 0);
-    }
-
-
-    private Observer<? super Response<ResponseBody>> getLogoutDisposal() {
-        DisposableObserver logout = new DisposableObserver<Response<ResponseBody>>() {
-            @Override
-            protected void onStart() {
-                super.onStart();
-            }
-
-            @Override
-            public void onNext(@NonNull Response<ResponseBody> responseBody) {
-                Log.i("vtt", "Success response: " + responseBody.toString());
-                Log.i("vtt", "Success header: " + responseBody.headers());
-//                bntLogout.setEnabled(false);
-            }
-
-            @Override
-            public void onError(@NonNull Throwable e) {
-                updateUIError(e.getMessage());
-//                bntLogout.setEnabled(true);
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        };
-        composite.add(logout);
-        return logout;
     }
 
     private String getLocation() {
@@ -401,11 +503,11 @@ public class LoginActivity extends AppCompatActivity {
                 + prefs.getString(KEY_OPS_ID, "");
     }
 
-    private void updateUIError(String message) {
-        updateUIError(Color.RED, "Error: " + message);
+    private void updateLogError(String message) {
+        updateLogWithColor(Color.RED, "Error: " + message);
     }
 
-    private void updateUIError(int color, String message) {
+    private void updateLogWithColor(int color, String message) {
         if (message != null && message.length() > 0) {
             appendColoredText(tvResult, "\n" + message, color);
         }
