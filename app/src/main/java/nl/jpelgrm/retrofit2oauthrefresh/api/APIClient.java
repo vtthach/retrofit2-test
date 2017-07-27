@@ -13,8 +13,18 @@ import retrofit2.http.Query;
 import retrofit2.http.Url;
 
 public interface APIClient {
-    // .header("Content-type", "application/x-www-form-urlencoded;charset=UTF-8")
-//                        .header("Authorization", "Basic " +TokenUtils.getBase64FromUserNameAndPassword(userName, password))
+    @FormUrlEncoded
+    @POST()
+    @Headers("Content-type: application/x-www-form-urlencoded;charset=UTF-8")
+    Observable<Response<ResponseBody>> login(
+            @Header("User-Agent") String userAgent,
+            @Url String url,
+            @Header("Authorization") String token,
+            @Field("response_type") String responseType,
+            @Field("client_id") String clientId,
+            @Field("redirect_uri") String redirectUri,
+            @Field("scope") String scope);
+
     @FormUrlEncoded
     @POST()
     // My machine
@@ -23,7 +33,6 @@ public interface APIClient {
     Observable<Response<ResponseBody>> login(
             @Header("User-Agent") String userAgent,
             @Url String url,
-            @Header("Authorization") String token,
             @Field("response_type") String responseType,
             @Field("client_id") String clientId,
             @Field("redirect_uri") String redirectUri,

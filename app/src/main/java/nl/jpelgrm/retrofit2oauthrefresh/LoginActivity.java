@@ -63,6 +63,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnClear;
     private Button btnCheckSessionGet;
     private Button btnClearCookie;
+    private Button btnLoginWithoutLoginData;
 
     private TextView tvResult;
     private TextView tvCookieLog;
@@ -142,6 +143,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setView() {
+        btnLoginWithoutLoginData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startLogin();
+            }
+        });
 
         btnClearCookie.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -233,6 +240,7 @@ public class LoginActivity extends AppCompatActivity {
         tvCookieLog = (TextView) findViewById(R.id.tvCookieLog);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         bntLogout = (Button) findViewById(R.id.bntLogout);
+        btnLoginWithoutLoginData = (Button) findViewById(R.id.btnLoginWithoutLoginData);
         btnClearCookie = (Button) findViewById(R.id.btnClearCookie);
         btnClear = (Button) findViewById(R.id.btnClear);
         edTextUserName = (EditText) findViewById(R.id.edUserName);
@@ -326,6 +334,41 @@ public class LoginActivity extends AppCompatActivity {
                                 edUserAgent.getText().toString(),
                                 edLoginUrl.getText().toString(),
                                 "Basic " + token,
+                                TokenUtils.RESPONSE_TYPE,
+                                edClientId.getText().toString(),
+                                edRedirectUri.getText().toString(),
+                                TokenUtils.SCOPE)
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(getLoginDisposal());
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+                        updateLogError(e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+
+    }
+
+    protected void startLogin() {
+        composite.clear();
+        logOnUi("\n----------LOGIN ", DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime()));
+        getObservableInitService()
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableObserver<APIClient>() {
+                    @Override
+                    public void onNext(@NonNull APIClient apiClient) {
+                        Log.i("vtt", "Start login with out usename & password");
+                        apiClient.login(
+                                edUserAgent.getText().toString(),
+                                edLoginUrl.getText().toString(),
                                 TokenUtils.RESPONSE_TYPE,
                                 edClientId.getText().toString(),
                                 edRedirectUri.getText().toString(),
